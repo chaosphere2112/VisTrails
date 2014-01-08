@@ -959,6 +959,8 @@ class QAxisComboWidget(QtGui.QComboBox):
         # Connect Signals
         self.connect(self, QtCore.SIGNAL('currentIndexChanged(const QString&)'),
                      self.valueChangedEvent)
+        self.connect(self, QtCore.SIGNAL('editTextChanged(const QString&)'),
+                     self.valueChangedEvent)
 
     def initValues(self, axisValues):
         """ initValues(axisValues: list)
@@ -1012,7 +1014,7 @@ class QAxisComboWidget(QtGui.QComboBox):
         """
         index = self.findData(QtCore.QVariant(QtCore.QStringList(['variables', str(axisValue)])))
         # If user entered a value into the lineEdit.
-        if index == -1:
+        if 1:#index == -1:
             self.updateValueFromLineEditText(axisValue)
             return
 
