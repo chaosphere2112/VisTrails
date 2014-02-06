@@ -3,11 +3,53 @@ Created on Oct 10, 2013
 
 @author: tpmaxwell
 '''
+from __future__ import with_statement
+from __future__ import division
 
+_TRY_PYSIDE = True
+
+try:
+    if not _TRY_PYSIDE:
+        raise ImportError()
+    import PySide.QtCore as _QtCore
+    QtCore = _QtCore
+    USES_PYSIDE = True
+except ImportError:
+    import sip
+    try: sip.setapi('QString', 2)
+    except: pass
+    try: sip.setapi('QVariant', 2)
+    except: pass
+    import PyQt4.QtCore as _QtCore
+    QtCore = _QtCore
+    USES_PYSIDE = False
+
+# def _pyside_import_module(moduleName):
+#     pyside = __import__('PySide', globals(), locals(), [moduleName], -1)
+#     return getattr(pyside, moduleName)
+# 
+# 
+# def _pyqt4_import_module(moduleName):
+#     pyside = __import__('PyQt4', globals(), locals(), [moduleName], -1)
+#     return getattr(pyside, moduleName)
+# 
+# 
+# if USES_PYSIDE:
+#     import_module = _pyside_import_module
+# 
+#     Signal = QtCore.Signal
+#     Slot = QtCore.Slot
+#     Property = QtCore.Property
+# else:
+#     import_module = _pyqt4_import_module
+# 
+#     Signal = QtCore.pyqtSignal
+#     Slot = QtCore.pyqtSlot
+#     Property = QtCore.pyqtProperty
+    
 import sys
 import os.path
 import vtk, time
-from PyQt4 import QtCore, QtGui
 import numpy as np
 import os, vtk
 from PointCollection import PlotType
@@ -42,44 +84,32 @@ class MapManager( QtCore.QObject ):
         self.updateMapOpacity() 
         
     def getSphericalMap( self, **args ):
-        thetaResolution = args.get( "thetaRes", 64 )
-        phiResolution = args.get( "phiRes", 64 )
+        thetaResolution = args.get( "thetaRes", 32 )
+        phiResolution = args.get( "phiRes", 32 )
         radius = args.get( "radius", 100 )
-        lon_range = args.get( "lon_range", [ -180.0, 180.0 ] )
-        lat_range = args.get( "lat_range", [ 90.0, -90.0 ] )
         if self.sphereActor == None: 
             self.sphere = vtk.vtkSphereSource()
             self.sphere.SetThetaResolution( thetaResolution )
             self.sphere.SetPhiResolution( phiResolution )
-            self.sphere.SetRadius( radius )
-#             self.sphere.SetStartTheta( lon_range[0] )        
-#             self.sphere.SetEndTheta( lon_range[1] ) 
-#             self.sphere.SetStartPhi( lat_range[0] )        
-#             self.sphere.SetEndPhi( lat_range[1] )        
-       
+            self.sphere.SetRadius( radius )   
+            self.sphere.SetEndTheta( 359.999 )    
             mesh = self.sphere.GetOutput()
             
             self.sphereTexmapper = vtk.vtkTextureMapToSphere()
-            self.sphereTexmapper.SetInput(mesh)
+            if vtk.VTK_MAJOR_VERSION <= 5:  self.sphereTexmapper.SetInput(mesh)
+            else:                           self.sphereTexmapper.SetInputData(mesh)        
             self.sphereTexmapper.PreventSeamOff()
             
             self.sphereMapper = vtk.vtkPolyDataMapper()
-            self.sphereMapper.SetInput(self.sphereTexmapper.GetOutput())
-           
-#             imageFlipper = vtk.vtkImageReslice()
-#             imageFlipper.SetInput( self.baseImage )
-#             resliceAxes = vtk.vtkMatrix4x4()
-#             resliceAxes.Identity()
-#             resliceAxes.SetElement( 1, 1, -1 )
-#             imageFlipper.SetResliceAxesOrigin( 0, 0, 0 )              
-#             imageFlipper.SetResliceAxes( resliceAxes )
-                        
+            self.sphereMapper.SetInputConnection(self.sphereTexmapper.GetOutputPort())
+                                   
             imageFlipper = vtk.vtkImageFlip()
-            imageFlipper.SetInput( self.sphericalBaseImage )
+            if vtk.VTK_MAJOR_VERSION <= 5:  imageFlipper.SetInput(self.sphericalBaseImage)
+            else:                           imageFlipper.SetInputData(self.sphericalBaseImage)        
             imageFlipper.SetFilteredAxis( 1 ) 
             
             self.sphereTexture = vtk.vtkTexture()
-            self.sphereTexture.SetInput( imageFlipper.GetOutput()  )
+            self.sphereTexture.SetInputConnection( imageFlipper.GetOutputPort()  )
             
             self.sphereActor = vtk.vtkActor()
             self.sphereActor.SetMapper(self.sphereMapper)
@@ -126,6 +156,7 @@ class MapManager( QtCore.QObject ):
             self.imageInfo = vtk.vtkImageChangeInformation()        
             self.image_reader = vtk.vtkJPEGReader()      
             self.image_reader.SetFileName(  self.map_file )
+            self.image_reader.Update()
             world_image = self.image_reader.GetOutput() 
             self.sphericalBaseImage = self.RollMap( world_image )  
             new_dims, scale = None, None
@@ -144,7 +175,8 @@ class MapManager( QtCore.QObject ):
             self.baseMapActor.SetOpacity( self.map_opacity )
             mapCorner = [ self.x0, self.y0 ]
             self.baseMapActor.SetPosition( mapCorner[0], mapCorner[1], 0.1 )
-            self.baseMapActor.SetInput( self.baseImage )
+            if vtk.VTK_MAJOR_VERSION <= 5:  self.baseMapActor.SetInput(self.baseImage)
+            else:                           self.baseMapActor.SetInputData(self.baseImage)        
             self.mapCenter = [ self.x0 + map_cut_size[0]/2.0, self.y0 + map_cut_size[1]/2.0 ]  
             
     def getBaseMapActor(self):
@@ -181,7 +213,6 @@ class MapManager( QtCore.QObject ):
         return os.path.join( self.data_dir, filename ) 
         
     def RollMap( self, baseImage ):
-        baseImage.Update()
         if self.world_cut  == self.map_cut: return baseImage
         baseExtent = baseImage.GetExtent()
         baseSpacing = baseImage.GetSpacing()
@@ -197,27 +228,29 @@ class MapManager( QtCore.QObject ):
         
         extent[0:2] = [ x0, x0 + sliceCoord - 1 ]
         clip0 = vtk.vtkImageClip()
-        clip0.SetInput( baseImage )
+        if vtk.VTK_MAJOR_VERSION <= 5:  clip0.SetInput(baseImage)
+        else:                           clip0.SetInputData(baseImage)        
         clip0.SetOutputWholeExtent( extent[0], extent[1], extent[2], extent[3], extent[4], extent[5] )
         
         extent[0:2] = [ x0 + sliceCoord, x1 ]
         clip1 = vtk.vtkImageClip()
-        clip1.SetInput( baseImage )
+        if vtk.VTK_MAJOR_VERSION <= 5:  clip1.SetInput(baseImage)
+        else:                           clip1.SetInputData(baseImage)        
         clip1.SetOutputWholeExtent( extent[0], extent[1], extent[2], extent[3], extent[4], extent[5] )
         
         append = vtk.vtkImageAppend()
         append.SetAppendAxis( 0 )
-        append.AddInput( clip1.GetOutput() )          
-        append.AddInput( clip0.GetOutput() )
+        append.AddInputConnection( clip1.GetOutputPort() )          
+        append.AddInputConnection( clip0.GetOutputPort() )
         
         imageInfo = vtk.vtkImageChangeInformation()
         imageInfo.SetInputConnection( append.GetOutputPort() ) 
         imageInfo.SetOutputOrigin( 0.0, 0.0, 0.0 )
         imageInfo.SetOutputExtentStart( 0, 0, 0 )
         imageInfo.SetOutputSpacing( baseSpacing[0], baseSpacing[1], baseSpacing[2] )
+        imageInfo.Update()
         
         result = imageInfo.GetOutput() 
-        result.Update()
         return result
 
     def NormalizeMapLon( self, lon ): 
