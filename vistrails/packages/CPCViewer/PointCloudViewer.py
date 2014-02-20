@@ -62,6 +62,7 @@ from packages.CPCViewer.ControlPanel import CPCConfigGui, LevelingConfigParamete
 from packages.CPCViewer.ColorMapManager import *
 from packages.CPCViewer.MapManager import MapManager
 
+
 VTK_NO_MODIFIER         = 0
 VTK_SHIFT_MODIFIER      = 1
 VTK_CONTROL_MODIFIER    = 2        
@@ -294,6 +295,7 @@ class CPCPlot(QtCore.QObject):
     
     sliceAxes = [ 'x', 'y', 'z' ]  
 
+<<<<<<< HEAD
     def __init__( self, vtk_render_window = None , **args ):
         QtCore.QObject.__init__( self )
         self.widget = None
@@ -304,6 +306,16 @@ class CPCPlot(QtCore.QObject):
         self.labelBuff = ""
         self.configDialog = None
         self.renderWindow = vtk_render_window if ( vtk_render_window <> None ) else self.createRenderWindow()
+=======
+    def __init__( self, vtk_render_window, **args ):
+        QtCore.QObject.__init__( self )
+        self.partitioned_point_cloud = None
+        self.point_cloud_overview = None
+        self.renderWindow = vtk_render_window
+        self.renderWindowInteractor = self.renderWindow.GetInteractor()
+        style = args.get( 'istyle', vtk.vtkInteractorStyleTrackballCamera() )  
+        self.renderWindowInteractor.SetInteractorStyle( style )
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.process_mode = ProcessMode.Default
         self.config_mode = ConfigMode.Default
         self.xcenter = 100.0
@@ -336,6 +348,7 @@ class CPCPlot(QtCore.QObject):
         self._current_subset_specs = None
         self.scalarRange = None
         self.volumeThresholdRange = None
+<<<<<<< HEAD
         self.sphere_source = None
 
     def createRenderWindow(self):
@@ -370,6 +383,8 @@ class CPCPlot(QtCore.QObject):
     def closeConfigDialog(self):
         if self.configDialog:
             self.configDialog.closeDialog()
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
 
     @property
     def current_subset_specs(self):
@@ -384,11 +399,14 @@ class CPCPlot(QtCore.QObject):
     def getLUT( self, cmap_index=0  ):
         colormapManager = self.getColormapManager( index=cmap_index )
         return colormapManager.lut
+<<<<<<< HEAD
 
     def toggleColormapVisibility(self):
         for colormapManager in self.colormapManagers.values():
             colormapManager.toggleColormapVisibility()
         self.render()
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
     
     def getColormapManager( self, **args ):
         cmap_index = args.get('index',0)
@@ -409,6 +427,7 @@ class CPCPlot(QtCore.QObject):
         colormapName = str(data[0])
         invertColormap = getBool( data[1] ) 
         enableStereo = getBool( data[2] )
+<<<<<<< HEAD
         show_colorBar = getBool( data[3] ) if ( len( data ) > 3 ) else 0 
         cmap_index = args.get( 'index', 0 )
         metadata = self.point_cloud_overview.getMetadata()
@@ -421,6 +440,17 @@ class CPCPlot(QtCore.QObject):
             cmap_pos = [ 0.9, 0.2 ] if (cmap_index==0) else [ 0.02, 0.2 ]
             self.renderer.AddActor( colormapManager.createActor( pos=cmap_pos, title=cm_title ) )
         colormapManager.setColorbarVisibility( show_colorBar )
+=======
+        smoothColormap = getBool( data[3] ) if ( len( data ) > 3 ) else 1 
+        cmap_index = args.get( 'index', 0 )
+        cm_title = args.get( 'title', '' )
+        self.updateStereo( enableStereo )
+        colormapManager = self.getColormapManager( name=colormapName, invert=invertColormap, smooth=smoothColormap, index=cmap_index, units=self.getUnits(cmap_index) )
+        if( colormapManager.colorBarActor == None ): 
+            cmap_pos = [ 0.9, 0.2 ] if (cmap_index==0) else [ 0.02, 0.2 ]
+            units = self.getUnits( cmap_index )
+            self.renderer.AddActor( colormapManager.createActor( pos=cmap_pos, title=cm_title ) )
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.render() 
         return True
         return False 
@@ -495,6 +525,7 @@ class CPCPlot(QtCore.QObject):
         self.updateThresholding( 'vardata', self.volumeThresholdRange.getRange() )    
              
     def getLabelActor(self):
+<<<<<<< HEAD
         return self.textDisplayMgr.getTextActor( 'label', self.labelBuff, (.01, .90), size = VTK_NOTATION_SIZE, bold = True  )
 
     def onResizeEvent(self):
@@ -506,6 +537,12 @@ class CPCPlot(QtCore.QObject):
             var_name = metadata.get( 'var_name', '')
             var_units = metadata.get( 'var_units', '')
             self.labelBuff = "%s (%s)\n%s" % ( var_name, var_units, str(text) )
+=======
+        return self.textDisplayMgr.getTextActor( 'label', self.labelBuff, (.01, .95), size = VTK_NOTATION_SIZE, bold = True  )
+
+    def updateTextDisplay( self, text, render=False ):
+        self.labelBuff = str(text)
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.getLabelActor().VisibilityOn() 
         if render: self.render()     
     
@@ -537,6 +574,7 @@ class CPCPlot(QtCore.QObject):
 #     def terminate(self):
 #         self.partitioned_point_cloud.terminate()
 
+<<<<<<< HEAD
     def getSphere(self):
         if self.sphere_source == None:
             self.createSphere()
@@ -559,6 +597,8 @@ class CPCPlot(QtCore.QObject):
         self.sphere_actor.SetMapper(mapper)
         self.renderer.AddActor( self.sphere_actor )
          
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
     def onRightButtonPress( self, caller, event ):
         shift = caller.GetShiftKey()
         if not shift: return
@@ -571,8 +611,11 @@ class CPCPlot(QtCore.QObject):
             if iPt >= 0:
                 if self.partitioned_point_cloud and self.partitioned_point_cloud.hasActiveCollections():                
                     pick_pos, dval = self.partitioned_point_cloud.getPoint( actor, iPt ) 
+<<<<<<< HEAD
                     color = self.getColormapManager().getColor( dval )
                     self.configSphere( pick_pos, color )
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
                 else:
                     pick_pos, dval = self.point_cloud_overview.getPoint( iPt ) 
 #                 if self.topo == PlotType.Spherical:
@@ -611,6 +654,7 @@ class CPCPlot(QtCore.QObject):
         else:                           self.clipOn()
         
     def clipOn(self):
+<<<<<<< HEAD
         if self.enableClip:
             self.clipper.On()
             self.executeClip()
@@ -618,13 +662,24 @@ class CPCPlot(QtCore.QObject):
     def clipOff(self):
         if self.enableClip:
             self.clipper.Off()      
+=======
+        self.clipper.On()
+        self.executeClip()
+
+    def clipOff(self):
+        self.clipper.Off()      
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
 
     def processEvent(self, eventArgs ):
         if eventArgs[0] == "KeyEvent":
             self.onKeyEvent( eventArgs[1:])
+<<<<<<< HEAD
         if eventArgs[0] == "ResizeEvent":
             self.onResizeEvent()           
 #        print " -- Event: %s " % str( eventArgs ); sys.stdout.flush()
+=======
+        print " -- Event: %s " % str( eventArgs ); sys.stdout.flush()
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
 #        SetEnabled    (     int          )
         
 #        self.emit( QtCore.SIGNAL('Close')  )
@@ -725,8 +780,12 @@ class CPCPlot(QtCore.QObject):
             self.planeWidget = vtk.vtkImplicitPlaneWidget()
             self.planeWidget.SetInteractor( self.renderWindowInteractor )
             self.planeWidget.SetPlaceFactor( 1.5 )
+<<<<<<< HEAD
             if vtk.VTK_MAJOR_VERSION <= 5:  self.planeWidget.SetInput( self.point_cloud_overview.getPolydata() )
             else:                           self.planeWidget.SetInputData( self.point_cloud_overview.getPolydata() )        
+=======
+            self.planeWidget.SetInput( self.point_cloud_overview.getPolydata() )
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
             self.planeWidget.AddObserver("StartInteractionEvent", self.processStartInteractionEvent )
             self.planeWidget.AddObserver("EndInteractionEvent", self.processEndInteractionEvent )
             self.planeWidget.AddObserver("InteractionEvent", self.processInteractionEvent )
@@ -896,8 +955,12 @@ class CPCPlot(QtCore.QObject):
             pass                 
         elif args and args[0] == "Color Scale":
             norm_range = self.scalarRange.getScaledRange() 
+<<<<<<< HEAD
             self.point_cloud_overview.setScalarRange( norm_range ) 
             self.setColorbarRange( norm_range )         
+=======
+            self.point_cloud_overview.setScalarRange( norm_range )          
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.render()
 
                      
@@ -985,8 +1048,11 @@ class CPCPlot(QtCore.QObject):
             self.processsInitParameter( args[1], args[2] )
         elif args[0] =='Point Size':
             self.processPointSizeCommand( args[1:] )
+<<<<<<< HEAD
         elif args[0] =='Opacity Scale':
             self.processOpacityScalingCommand( args[1:] )
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         elif args[0] =='Vertical Scaling':
             self.processVerticalScalingCommand( args[1:] )
 
@@ -1029,11 +1095,15 @@ class CPCPlot(QtCore.QObject):
             self.execCurrentSlice()
         elif op in POS_VECTOR_COMP: 
             self.updatePlaneWidget()          
+<<<<<<< HEAD
             self.execCurrentSlice()   
             
     def setColorbarRange( self, cbar_range, cmap_index=0 ):
         colormapManager = self.getColormapManager( index=cmap_index )
         colormapManager.setDisplayRange( cbar_range )   
+=======
+            self.execCurrentSlice()      
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
 
     def processsInitParameter( self, parameter_key, config_param ):
         paramKeys = parameter_key.split(':') 
@@ -1042,16 +1112,23 @@ class CPCPlot(QtCore.QObject):
                 self.scalarRange = config_param  
                 self.scalarRange.setScalingBounds( self.point_cloud_overview.getValueRange()  )  
                 self.connect( self.scalarRange, QtCore.SIGNAL('ValueChanged'), self.processColorScaleCommand ) 
+<<<<<<< HEAD
                 norm_range = self.scalarRange.getScaledRange() 
                 self.point_cloud_overview.setScalarRange( norm_range )  
                 self.setColorbarRange( norm_range )              
+=======
+                self.point_cloud_overview.setScalarRange( self.scalarRange.getScaledRange() )       
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
             elif paramKeys[1] == 'Color Map':
                 self.colorMapCfg = config_param 
                 self.connect( self.colorMapCfg, QtCore.SIGNAL('ValueChanged'), self.processColorMapCommand ) 
                 self.processColorMapCommand()
+<<<<<<< HEAD
             elif paramKeys[1] == 'Opacity Scale':
                 self.oscale = config_param   
                 self.connect( self.oscale, QtCore.SIGNAL('ValueChanged'), self.processOpacityScalingCommand ) 
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         elif paramKeys[0] == 'Subsets':
             if paramKeys[1] == 'Slice Planes':
                 self.sliceProperties = config_param
@@ -1090,6 +1167,7 @@ class CPCPlot(QtCore.QObject):
         if not self.partitioned_point_cloud.hasActiveCollections():
             self.render_mode = ProcessMode.LowRes
         self.render()
+<<<<<<< HEAD
 
     def processOpacityScalingCommand(self, args=None ):
         arange = self.oscale.getRange()
@@ -1098,6 +1176,8 @@ class CPCPlot(QtCore.QObject):
         if ( abs( arange[0] - alpha_range[0] ) > 0.1 ) or ( abs( arange[1] - alpha_range[0] ) > 0.1 ):
             colormapManager.setAlphaRange( arange )
             self.render()
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
                 
     def processVerticalScalingCommand(self, args=None ):
         if args and args[0] == "StartConfig":
@@ -1140,7 +1220,11 @@ class CPCPlot(QtCore.QObject):
             print>>sys.stderr, "Can't find projection: %s " % str( seleted_projection )
 
     def processColorMapCommand( self, args=None ):
+<<<<<<< HEAD
         colorCfg = [ self.colorMapCfg.getValue('Colormap'), self.colorMapCfg.getValue('Invert'), self.colorMapCfg.getValue('Stereo'), self.colorMapCfg.getValue('Colorbar') ]
+=======
+        colorCfg = [ self.colorMapCfg.getValue('Colormap'), self.colorMapCfg.getValue('Invert'), self.colorMapCfg.getValue('Stereo'), self.colorMapCfg.getValue('Smooth') ]
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.setColormap( colorCfg )  
 
     def updateSlicing( self, sliceIndex, slice_bounds, **args ):
@@ -1279,8 +1363,17 @@ class CPCPlot(QtCore.QObject):
         earth_source.OutlineOn()
         earth_polydata = earth_source.GetOutput()
         self.earth_mapper = vtk.vtkPolyDataMapper()
+<<<<<<< HEAD
         if vtk.VTK_MAJOR_VERSION <= 5:  self.earth_mapper.SetInput(earth_polydata)
         else:                           self.earth_mapper.SetInputData(earth_polydata)        
+=======
+
+        if vtk.VTK_MAJOR_VERSION <= 5:
+            self.earth_mapper.SetInput(earth_polydata)
+        else:
+            self.earth_mapper.SetInputData(earth_polydata)
+
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.earth_actor = vtk.vtkActor()
         self.earth_actor.SetMapper( self.earth_mapper )
         self.earth_actor.GetProperty().SetColor(0,0,0)
@@ -1296,6 +1389,7 @@ class CPCPlot(QtCore.QObject):
         self.renderWindowInteractor.AddObserver( 'RightButtonPressEvent', self.onRightButtonPress )  
         self.textDisplayMgr = TextDisplayMgr( self.renderer )             
         self.pointPicker = vtk.vtkPointPicker()
+<<<<<<< HEAD
         self.pointPicker.PickFromListOn()   
         self.pointPicker.InitializePickList()             
         self.renderWindowInteractor.SetPicker(self.pointPicker) 
@@ -1308,6 +1402,18 @@ class CPCPlot(QtCore.QObject):
             self.clipper.SetHandleSize( 0.005 )
             self.clipper.SetEnabled( True )
             self.clipper.InsideOutOn()  
+=======
+        self.pointPicker.PickFromListOn()    
+        self.renderWindowInteractor.SetPicker(self.pointPicker) 
+        self.clipper = vtk.vtkBoxWidget()
+        self.clipper.RotationEnabledOff()
+        self.clipper.SetPlaceFactor( 1.0 ) 
+        self.clipper.KeyPressActivationOff()
+        self.clipper.SetInteractor( self.renderWindowInteractor )    
+        self.clipper.SetHandleSize( 0.005 )
+        self.clipper.SetEnabled( True )
+        self.clipper.InsideOutOn()  
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
            
 #        self.clipper.AddObserver( 'StartInteractionEvent', self.startClip )
 #        self.clipper.AddObserver( 'EndInteractionEvent', self.endClip )
@@ -1354,7 +1460,11 @@ class CPCPlot(QtCore.QObject):
             
     def initCamera(self):
         fp = self.point_cloud_overview.getCenter() 
+<<<<<<< HEAD
         self.renderer.GetActiveCamera().SetPosition( fp[0], fp[1], fp[3] )
+=======
+        self.renderer.GetActiveCamera().SetPosition( fp[0], fp[1], fp[0]*2 )
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.renderer.GetActiveCamera().SetFocalPoint( fp[0], fp[1], 0 )
         self.renderer.GetActiveCamera().SetViewUp( 0, 1, 0 )  
         self.renderer.ResetCameraClippingRange()     
@@ -1374,7 +1484,11 @@ class CPCPlot(QtCore.QObject):
         print "%s: Camera => %s " % ( label, str(camera_pos) )
                 
     def initCollections( self, nCollections, init_args, **args ):
+<<<<<<< HEAD
         if nCollections > 0:
+=======
+        if nCollections > 1:
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
             self.partitioned_point_cloud = vtkPartitionedPointCloud( nCollections, init_args, **args )
             self.partitioned_point_cloud.connect( self.partitioned_point_cloud, QtCore.SIGNAL('newDataAvailable'), self.newDataAvailable )
         else:
@@ -1383,7 +1497,11 @@ class CPCPlot(QtCore.QObject):
         self.createRenderer()
         self.low_res_actor = self.point_cloud_overview.actor
         self.renderer.AddActor( self.low_res_actor )
+<<<<<<< HEAD
 #        self.pointPicker.AddPickList( self.low_res_actor )
+=======
+        self.pointPicker.AddPickList( self.low_res_actor )
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         
         if self.partitioned_point_cloud:
             for point_cloud in  self.partitioned_point_cloud.values():     
@@ -1428,9 +1546,14 @@ class CPCPlot(QtCore.QObject):
             self.decrementOverviewResolution()
             self.partitioned_point_cloud.postDataQueueEvent()
             pc.setScalarRange( self.scalarRange.getScaledRange() )
+<<<<<<< HEAD
             self.updateZRange( pc )
             trng = pc.getThresholdingRange() 
             text = " Thresholding Range[%d]: ( %.3f, %.3f )\n Colormap Range: %s " % ( pcIndex, trng[0], trng[1], str( self.scalarRange.getRange() ) )
+=======
+            self.updateZRange( pc ) 
+            text = " Thresholding Range[%d]: %s \n Colormap Range: %s " % ( pcIndex, str( pc.getThresholdingRange() ), str( self.scalarRange.getRange() ) )
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
             self.updateTextDisplay( text )
     #        print " Subproc[%d]--> new Thresholding Data Available: %s " % ( pcIndex, str( pc.getThresholdingRange() ) ); sys.stdout.flush()
     #        self.reset( ) # pcIndex )
@@ -1450,19 +1573,30 @@ class CPCPlot(QtCore.QObject):
       
     def init(self, **args ):
         init_args = args[ 'init_args' ]      
+<<<<<<< HEAD
         n_overview_points = args.get( 'n_overview_points', 600000 )    
         n_subproc_points = args.get( 'n_subproc_points', 600000 )  
         show = args.get( 'show', False )  
         n_cores = args.get( 'n_cores', 32 )    
+=======
+        n_overview_points = args.get( 'n_overview_points', 500000 )    
+        n_subproc_points = args.get( 'n_subproc_points', 1000000 )    
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
         self.point_cloud_overview = vtkLocalPointCloud( 0, max_points=n_overview_points ) 
         lut = self.getLUT()
         self.point_cloud_overview.initialize( init_args, lut = lut, maxStageHeight=self.maxStageHeight  )
         nInputPoints = self.point_cloud_overview.getNumberOfInputPoints()
+<<<<<<< HEAD
         nPartitions = min( nInputPoints / n_subproc_points, 10  )
         nCollections = min( nPartitions, n_cores )
         print " Init PCViewer, nInputPoints = %d, n_overview_points = %d, n_subproc_points = %d, nCollections = %d, overview skip index = %s" % ( nInputPoints, n_overview_points, n_subproc_points, nCollections, self.point_cloud_overview.getSkipIndex() )
         self.initCollections( nCollections, init_args, lut = lut, maxStageHeight=self.maxStageHeight  )
         if self.widget and show: self.widget.show()  
+=======
+        nCollections = min( nInputPoints / n_subproc_points, 10  )
+        print " Init PCViewer, nInputPoints = %d, n_overview_points = %d, n_subproc_points = %d, nCollections = %d, overview skip index = %s" % ( nInputPoints, n_overview_points, n_subproc_points, nCollections, self.point_cloud_overview.getSkipIndex() )
+        self.initCollections( nCollections, init_args, lut = lut, maxStageHeight=self.maxStageHeight  )
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
  
     def update(self):
         pass
@@ -1483,10 +1617,13 @@ class QVTKAdaptor( QVTKRenderWindowInteractor ):
     def closeEvent( self, event ):
         self.emit( QtCore.SIGNAL('Close') )
         QVTKRenderWindowInteractor.closeEvent( self, event )
+<<<<<<< HEAD
 
     def resizeEvent( self, event ):
         self.emit( QtCore.SIGNAL('event'), ( 'ResizeEvent', 0 ) )
         QVTKRenderWindowInteractor.resizeEvent( self, event )
+=======
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
     
 class QPointCollectionMgrThread( QtCore.QThread ):
     
@@ -1504,6 +1641,7 @@ class QPointCollectionMgrThread( QtCore.QThread ):
             self.pointCollectionMgr.update()
             time.sleep( self.delayTime )
         self.exit(0)       
+<<<<<<< HEAD
                              
 if __name__ == '__main__':
     import argparse
@@ -1559,3 +1697,6 @@ if __name__ == '__main__':
     app.exec_() 
     g.terminate() 
     
+=======
+                            
+>>>>>>> uvcdat-dv3d-support_more_dataset_types
