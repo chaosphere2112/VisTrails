@@ -955,7 +955,8 @@ class PM_MapCell3D( PM_DV3DCell ):
                         else:
                             dataPosition = [ ( self.roi[1] + self.roi[0] ) / 2.0, ( self.roi[3] + self.roi[2] ) / 2.0 ]
                     else:
-                        dataPosition = [ ( self.roi[1] + self.roi[0] ) / 2.0, ( self.roi[3] + self.roi[2] ) / 2.0 ]
+
+                        dataPosition = [ 180, 0 ] # [ ( self.roi[1] + self.roi[0] ) / 2.0, ( self.roi[3] + self.roi[2] ) / 2.0 ]
                 else:
                     self.world_cut = self.map_cut
             
