@@ -175,6 +175,7 @@ class PointCollection():
             z_scaling = args.get( 'z_scale', 1.0 )
             self.data_height = args.get( 'data_height', None )
             ascending = self.levelsAreAscending()
+            stage_height = ( self.maxStageHeight * z_scaling )
             
             nz = len( self.lev ) if self.lev else 1
             if height_varname and (height_varname <> self.hgt_var) and (height_varname <> 'Levels' ):
@@ -187,7 +188,7 @@ class PointCollection():
     #                print " setPointHeights: zdata shape = %s " % str( zdata.shape ); sys.stdout.flush()
                     self.vertical_bounds = ( zdata.min(), zdata.max() )  
                     if self.data_height == None: self.data_height = ( self.vertical_bounds[1] - self.vertical_bounds[0] )
-                    self.point_data_arrays['z'] = zdata * ( ( self.maxStageHeight * z_scaling ) / self.data_height ) 
+                    self.point_data_arrays['z'] = zdata * ( stage_height / self.data_height ) 
                 else:
                     print>>sys.stderr, "Can't find height var: %s " % height_varname
             else:
@@ -195,7 +196,6 @@ class PointCollection():
                     self.z_scaling = z_scaling
                     if height_varname: self.hgt_var = height_varname
                     np_points_data_list = []
-                    stage_height = ( self.maxStageHeight * z_scaling )
                     zstep = stage_height / nz
                     for iz in range( nz ):
                         zvalue = iz * zstep
@@ -374,8 +374,8 @@ class PointCollection():
         self.extractMetadata()
         self.grid = self.var.getGrid()
         self.lev = self.getLevel(self.var)
-        lon, lat = self.getLatLon( varname, grid_coords ) 
-        if ( id(lon) <> id(None) ) and ( id(lat) <> id(None) ):                            
+        lon, lat = self.getLatLon( varname, grid_coords )  
+        if ( id(lon) <> id(None) ) and ( id(lat) <> id(None) ):                                 
             self.time = self.var.getTime()
             z_scale = 0.5
             self.missing_value = self.var.attributes.get( 'missing_value', None )
@@ -393,7 +393,7 @@ class PointCollection():
             self.point_data_arrays['vardata'] = var_data
             self.vrange = ( var_data.min(), var_data.max() ) 
             self.var_data_cache[ self.iTimeStep ] = var_data
-            print "Read %d points, vrqnge = %s, missing_value = %s " % ( self.getNumberOfPoints(), str( self.vrange ) , str( self.missing_value ) ); sys.stdout.flush()
+            self.metadata['vbounds'] = self.vrange
         
     def getPoints(self):
         point_comps = [ self.point_data_arrays[comp].flat for comp in [ 'x', 'y', 'z'] ]
