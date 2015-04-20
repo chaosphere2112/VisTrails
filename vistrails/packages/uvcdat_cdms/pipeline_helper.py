@@ -12,7 +12,7 @@ from core.modules.vistrails_module import Module
 from core.uvcdat.plotmanager import get_plot_manager
 from core.modules.module_registry import get_module_registry, MissingPort
 import core.db.action
-import core.db.io    
+import core.db.io
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import pyqtSlot, pyqtSignal
 from PyQt4.QtGui import QApplication
@@ -29,13 +29,13 @@ from gui.application import get_vistrails_application
 import api, sys, traceback, collections
 
 class CDMSPipelineHelper(PlotPipelineHelper):
-    
+
     @classmethod
     def getSheetTabWidget( klass, sheet_index = -1 ):
         from packages.spreadsheet.spreadsheet_controller import spreadsheetController
         spreadsheetWindow = spreadsheetController.findSpreadsheetWindow()
-        if sheet_index == -1:  
-            try: sheet_index = spreadsheetWindow.get_current_tab_controller().currentIndex () 
+        if sheet_index == -1:
+            try: sheet_index = spreadsheetWindow.get_current_tab_controller().currentIndex ()
             except: return None
         return spreadsheetWindow.get_current_tab_controller().tabWidgets[ sheet_index ]
 
@@ -50,21 +50,21 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             if cell_location.functions[i].name == 'Row':
                 row = int( cell_location.functions[i].params[0].strValue ) - 1
             elif cell_location.functions[i].name == "Column":
-                col = int( cell_location.functions[i].params[0].strValue ) - 1 
-                
+                col = int( cell_location.functions[i].params[0].strValue ) - 1
+
         return ( row, col )
 
     @classmethod
-    def getPlotApps( klass, row, col ):                  
-        tabWidget = klass.getSheetTabWidget()  
-        cell  = tabWidget.getCellWidget( row, col ).widget()   
+    def getPlotApps( klass, row, col ):
+        tabWidget = klass.getSheetTabWidget()
+        cell  = tabWidget.getCellWidget( row, col ).widget()
         return cell.canvas.backend.plotApps
 
     @classmethod
     def show_configuration_widget(klass, controller, version, plot_objs=[]):
         pipeline = controller.vt_controller.vistrail.getPipeline(version)
         plots = CDMSPipelineHelper.find_plot_modules(pipeline)
-        vars = CDMSPipelineHelper.find_modules_by_type(pipeline, 
+        vars = CDMSPipelineHelper.find_modules_by_type(pipeline,
                                                        [CDMSVariable,
                                                         CDMSVariableOperation])
         for plot in plots:
@@ -74,7 +74,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                 return CDMS3DPlotWidget( controller, version, plots, vars, plot_apps )
 
         return CDMSPlotWidget(controller,version,plots,vars)
-    
+
     @staticmethod
     def find_plot_modules(pipeline):
         #find plot modules in the order they appear in the Cell
@@ -85,18 +85,18 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             for plot in plots:
                 res.append(pipeline.modules[plot])
         return res
-                
+
     @staticmethod
     def find_variables_connected_to_plot_module(controller, pipeline, plot_id):
-        conns1 = controller.get_connections_to(pipeline, [plot_id], 
+        conns1 = controller.get_connections_to(pipeline, [plot_id],
                                               port_name="variable")
-        conns2 = controller.get_connections_to(pipeline, [plot_id], 
+        conns2 = controller.get_connections_to(pipeline, [plot_id],
                                               port_name="variable2")
         varlist = []
         for conn in conns1 + conns2:
             varlist.append(pipeline.modules[conn.source.moduleId])
         return varlist
-    
+
     @staticmethod
     def find_variables_connected_to_operation_module(controller, pipeline, op_id):
         module = pipeline.modules[op_id]
@@ -111,31 +111,31 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         elif issubclass(module.module_descriptor.module, CDMSNaryVariableOperation):
             vars = n_ary(controller, pipeline, op_id)
         return vars
-    
+
     @staticmethod
     def find_variables_connected_to_unary_operation_module(controller, pipeline, op_id):
-        conns = controller.get_connections_to( pipeline, [op_id], port_name="input_var")       
+        conns = controller.get_connections_to( pipeline, [op_id], port_name="input_var")
         vars = []
         for conn in conns:
             vars.append(pipeline.modules[conn.source.moduleId])
         return vars
-    
+
     @staticmethod
     def find_variables_connected_to_binary_operation_module(controller, pipeline, op_id):
-        conns = controller.get_connections_to(pipeline, [op_id], 
+        conns = controller.get_connections_to(pipeline, [op_id],
                                               port_name="input_var1")
-        conns.extend(controller.get_connections_to(pipeline, [op_id], 
+        conns.extend(controller.get_connections_to(pipeline, [op_id],
                                               port_name="input_var2"))
-        
+
         vars = []
         for conn in conns:
             vars.append(pipeline.modules[conn.source.moduleId])
         return vars
-    
+
     @staticmethod
     def find_variables_connected_to_n_ary_operation_module(controller, pipeline, op_id):
-        conns = controller.get_connections_to(pipeline, [op_id], 
-                                              port_name="input_vars")        
+        conns = controller.get_connections_to(pipeline, [op_id],
+                                              port_name="input_vars")
         vars = []
         for conn in conns:
             vars.append(pipeline.modules[conn.source.moduleId])
@@ -151,12 +151,12 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             ptype = helper.get_plot_type_from_module(pl_module)
             plot_objs.append(get_plot_manager().new_plot(plot_type, ptype, gmName))
         return plot_objs
-    
+
     @staticmethod
     def create_plot_module(controller, plot_type, plot_gm):
         reg = get_module_registry()
         ops = []
-        plot_descriptor = reg.get_descriptor_by_name('gov.llnl.uvcdat.cdms', 
+        plot_descriptor = reg.get_descriptor_by_name('gov.llnl.uvcdat.cdms',
                                        'CDMS' + plot_type)
         desc = plot_descriptor.module
         plot_module = controller.create_module_from_descriptor(plot_descriptor)
@@ -170,7 +170,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         for f in functions:
             plot_module.add_function(f)
         return plot_module
-    
+
     @staticmethod
     def get_input_port_name(num_op_vars, var_num):
         if num_op_vars == 1:
@@ -201,7 +201,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         return None
 
     @staticmethod
-    def build_variable_operation_pipeline(controller, version, vars, txt, st, 
+    def build_variable_operation_pipeline(controller, version, vars, txt, st,
                                           varname, varop=None):
         controller.change_selected_version(version)
         axes = None
@@ -215,7 +215,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             attributes = varop.attributes
             axisAttributes = varop.axisAttributes
             timeBounds = varop.timeBounds
-            
+
         uvcdat_ctrl = controller.uvcdat_controller
         if len(vars) == 1:
             op_class = CDMSUnaryVariableOperation
@@ -233,15 +233,15 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                                  attributes=attributes,
                                  axisAttributes=axisAttributes,
                                  timeBounds=timeBounds)
-        
-        
+
+
         if varname in uvcdat_ctrl.grower_varname2:
             op_class_inst.varname2 = uvcdat_ctrl.grower_varname2[varname]
-        
+
         op_module = op_class_inst.to_module(controller)
         ops = []
         ops.append(('add', op_module))
-        
+
         conns = []
         for i, var in enumerate(vars):
             oport = CDMSPipelineHelper.get_output_port_name(
@@ -252,10 +252,10 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             conn = controller.create_connection(var, oport, op_module, iport)
             ops.append(('add', conn))
             conns.append(conn)
-        
+
         layout_ops = controller.layout_modules_ops(
-                preserve_order=True, 
-                no_gaps=True, 
+                preserve_order=True,
+                no_gaps=True,
                 new_modules=[op_module],
                 new_connections=conns)
 
@@ -268,7 +268,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         action = controller.add_annotation(('__desc__', txt), op_module.id)
         actions.append(action)
         return (op_module, actions)
-                
+
     @staticmethod
     def connect_variables_to_plots(controller, var_modules, plot_obj, plot_module):
         ops = []
@@ -287,14 +287,14 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         return ops, new_conns
 
     @staticmethod
-    def create_actions_from_plot_obj(controller, var_modules, cell_module, 
+    def create_actions_from_plot_obj(controller, var_modules, cell_module,
                                       plot_obj, added_vars, order=None):
         reg = get_module_registry()
         ops = []
 
         plot_type = plot_obj.parent
         plot_gm = plot_obj.name
-        plot_descriptor = reg.get_descriptor_by_name('gov.llnl.uvcdat.cdms', 
+        plot_descriptor = reg.get_descriptor_by_name('gov.llnl.uvcdat.cdms',
                                                      'CDMS' + plot_type)
         desc = plot_descriptor.module
         plot_module = controller.create_module_from_descriptor(plot_descriptor)
@@ -323,29 +323,29 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         cell_conn = controller.create_connection(plot_module, 'self',
                                                  cell_module, 'plot')
         ops.append(('add', cell_conn))
-        
+
         new_ops, new_conns = CDMSPipelineHelper.connect_variables_to_plots(
                 controller, var_modules, plot_obj, plot_module)
-        
+
         return (ops + new_ops, new_conns + [cell_conn], plot_module)
-    
+
     @staticmethod
-    def build_plot_pipeline_action(controller, version, var_modules, plot_objs, 
+    def build_plot_pipeline_action(controller, version, var_modules, plot_objs,
                                    row, col):
         """build_plot_pipeline_action(controller: VistrailController,
                                       version: long,
                                       var_modules: [list of modules],
                                       plot_objs: [list of Plot objects],
                                       row: int,
-                                      col: int) -> Action 
-        
+                                      col: int) -> Action
+
         This function will create the complete workflow and add it to the
         provenance. You should make sure to update the state of the controller
-        so its current_version is version before adding the VisTrails action to 
+        so its current_version is version before adding the VisTrails action to
         the provenance.
-        row and col contain the position of the cell in the spreadsheet the 
+        row and col contain the position of the cell in the spreadsheet the
         workflow should be displayed.
-        It will create plot overlays based on the list of plot_objs given. 
+        It will create plot overlays based on the list of plot_objs given.
         """
         # FIXME want to make sure that nothing changes if var_module
         # or plot_module do not change
@@ -359,13 +359,13 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         ops = [('add', cell_module)]
         conns = []
         plot_modules = []
-        
+
         for i, plot in enumerate(plot_objs):
             ops2, new_conns, pm = CDMSPipelineHelper.create_actions_from_plot_obj( controller, var_modules, cell_module, plot, added_vars, i+1 )
             ops.extend(ops2)
             conns.extend(new_conns)
             plot_modules.append(pm)
-            
+
         loc_module = controller.create_module_from_descriptor(
             reg.get_descriptor_by_name('edu.utah.sci.vistrails.spreadsheet',  'CellLocation'))
         functions = controller.create_functions(loc_module,
@@ -376,23 +376,23 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                                                 cell_module, 'Location')
         ops.extend([('add', loc_module),
                     ('add', loc_conn)])
-        
+
         layout_ops = controller.layout_modules_ops(
-                preserve_order=True, 
-                no_gaps=True, 
+                preserve_order=True,
+                no_gaps=True,
                 new_modules=var_modules + plot_modules + [cell_module, loc_module],
                 new_connections=conns + [loc_conn])
-            
+
         action = core.db.action.create_action(ops + layout_ops)
         controller.change_selected_version(version)
         controller.add_new_action(action)
         controller.perform_action(action)
         return action
-    
+
     @staticmethod
     def remove_variables_from_pipeline_action(controller, version):
         pipeline = controller.vistrail.getPipeline(version)
-        
+
         variable_modules = CDMSPipelineHelper.find_modules_by_type(pipeline, [CDMSVariable,
                                                                           CDMSVariableOperation])
         ids = []
@@ -400,7 +400,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             ids.append(var.id)
         action = controller.delete_module_list(ids)
         return action
-        
+
     @staticmethod
     def update_plot_pipeline_action(controller, version, var_modules, plot_objs,
                                     row, col):
@@ -409,17 +409,17 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                                       var_modules: [list of modules],
                                       plot_objs: [list of Plot objects],
                                       row: int,
-                                      col: int) -> Action 
-        
+                                      col: int) -> Action
+
         This function will update the workflow and add it to the
-        provenance. It will reuse the plot configurations that are already in 
+        provenance. It will reuse the plot configurations that are already in
         the pipeline. You should make sure to update the state of the controller
-        so its current_version is version before adding the VisTrails action to 
+        so its current_version is version before adding the VisTrails action to
         the provenance.
-        row and col contain the position of the cell in the spreadsheet the 
+        row and col contain the position of the cell in the spreadsheet the
         workflow should be displayed, but as we keep a single cell, we don't
         use those parameters.
-         
+
         """
         # FIXME want to make sure that nothing changes if var_module
         # or plot_module do not change
@@ -435,7 +435,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         cell_module = CDMSPipelineHelper.find_module_by_name(pipeline, 'CDMSCell')
         conns = []
         new_plot_modules = []
-        
+
         for i, plot in enumerate(plot_objs):
             found = False
             for plot_module in plot_modules:
@@ -446,7 +446,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                     ops2, new_conns = CDMSPipelineHelper.connect_variables_to_plots(
                             controller, var_modules, plot, plot_module)
                     conns.extend(new_conns)
-                    
+
                     if (i+1) != PlotPipelineHelper.get_value_from_function(plot_module,
                                                                            "plotOrder"):
                         ops2.extend(controller.update_function_ops(plot_module,
@@ -459,19 +459,19 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                 new_plot_modules.append(pm)
 
             ops.extend(ops2)
-        
+
         layout_ops = controller.layout_modules_ops(
-                preserve_order=True, 
-                no_gaps=True, 
+                preserve_order=True,
+                no_gaps=True,
                 new_modules=var_modules + new_plot_modules,
                 new_connections=conns)
-        
+
         action = core.db.action.create_action(ops + layout_ops)
         controller.change_selected_version(version)
         controller.add_new_action(action)
         controller.perform_action(action)
         return action
-    
+
     @staticmethod
     def rebuild_pipeline_action(proj_controller, version, plot_modules):
         #first clear pipeline except for cell and location modules
@@ -486,7 +486,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                 ids.append(module.id)
         action = controller.delete_module_list(ids)
         version = action.id
-        
+
         #now start adding modules and connections
         ops = []
 
@@ -497,18 +497,18 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             ops.append(('add', p))
             conn = controller.create_connection(p, 'self', cell_module, 'plot')
             ops.append(('add', conn))
-        
+
         action = core.db.action.create_action(ops)
         controller.change_selected_version(version)
         controller.add_new_action(action)
         controller.perform_action(action)
-            
+
         sheetName = proj_controller.current_sheetName
         (row, col) = proj_controller.current_cell_coords
         cell = proj_controller.sheet_map[sheetName][(row,col)]
-        
+
         version = cell.current_parent_version = action.id
-            
+
         var_modules = []
         var_dict = {}
         ready_plots = []
@@ -518,50 +518,50 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                 for var in plot.variables:
                     proj_controller.get_var_module(var, cell, CDMSPipelineHelper, var_dict)
                     var_modules.append(var_dict[var])
-                
+
         version = cell.current_parent_version
-        
-        action = CDMSPipelineHelper.update_plot_pipeline_action(controller, 
-                                                                version, 
-                                                                var_modules, 
-                                                                ready_plots, 
+
+        action = CDMSPipelineHelper.update_plot_pipeline_action(controller,
+                                                                version,
+                                                                var_modules,
+                                                                ready_plots,
                                                                 row, col)
-        
+
         if action is not None:
             cell.current_parent_version = action.id
-             
+
 #        for v in var_modules:
 #            ops.append(('add', v))
-#            
+#
 #        for (v, v_p, p, p_p) in connections:
 #            conn = controller.create_connection(v, v_p, p, p_p)
 #            ops.append(('add', conn))
-            
+
 #        action = core.db.action.create_action(ops)
 #        controller.change_selected_version(version)
 #        controller.add_new_action(action)
 #        controller.perform_action(action)
         return action
-        
+
     @staticmethod
     def copy_pipeline_to_other_location(pipeline, controller, sheetName, row, col, plot_type, cell):
         from packages.spreadsheet.basic_widgets import CellLocation, SpreadsheetCell
         pip_str = core.db.io.serialize(pipeline)
         controller.change_selected_version(cell.current_parent_version)
-        
+
         modules = controller.paste_modules_and_connections(pip_str, (0.0,0.0))
         cell.current_parent_version = controller.current_version
         pipeline = controller.current_pipeline
-        
+
         reg = get_module_registry()
         cell_locations = CDMSPipelineHelper.find_modules_by_type(pipeline, [CellLocation])
-        cell_modules = CDMSPipelineHelper.find_modules_by_type(pipeline, [SpreadsheetCell]) 
-        
+        cell_modules = CDMSPipelineHelper.find_modules_by_type(pipeline, [SpreadsheetCell])
+
         #we assume that there is only one CellLocation and one SpreadsheetCell
         # delete location and create another one with the right locations
         action = controller.delete_module_list([cell_locations[0].id])
         cell.current_parent_version = action.id
-        
+
         loc_module = controller.create_module_from_descriptor(
             reg.get_descriptor_by_name('edu.utah.sci.vistrails.spreadsheet',  'CellLocation'))
         functions = controller.create_functions(loc_module,
@@ -571,58 +571,58 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         loc_conn = controller.create_connection(loc_module, 'self',
                                                 cell_modules[0], 'Location')
         ops = [('add', loc_module),
-               ('add', loc_conn)] 
-        
+               ('add', loc_conn)]
+
         action = core.db.action.create_action(ops)
         controller.change_selected_version(cell.current_parent_version)
         controller.add_new_action(action)
         controller.perform_action(action)
         cell.current_parent_version = action.id
-        
+
         # Update project controller cell information
         pipeline = controller.vistrail.getPipeline(action.id)
         plot_modules = CDMSPipelineHelper.find_modules_by_type(pipeline, [CDMSPlot,CDMS3DPlot])
-        
+
         cell.clear()
         for pl_module in plot_modules:
             gmName = CDMSPipelineHelper.get_graphics_method_name_from_module(pl_module)
             ptype = CDMSPipelineHelper.get_plot_type_from_module(pl_module)
             cell.add_plot(get_plot_manager().new_plot(plot_type, ptype, gmName))
-            
+
         for plot in plot_modules:
-            vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(controller, 
-                                                                       pipeline, 
+            vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(controller,
+                                                                       pipeline,
                                                                        plot.id)
             for var in vars:
                 cell.add_variable(CDMSPipelineHelper.get_variable_name_from_module(var))
-            
+
         return action
-    
+
     @staticmethod
-    def load_pipeline_in_location(pipeline, controller, sheetName, row, col, 
+    def load_pipeline_in_location(pipeline, controller, sheetName, row, col,
                                  plot_type, cell):
-        """load_pipeline_in_location(pipeline: Pipeline, 
+        """load_pipeline_in_location(pipeline: Pipeline,
                                      controller: VistrailController,
-                                     sheetName: str, 
+                                     sheetName: str,
                                      row: int, col: int,
                                      plot_type:,
-                                     cell: InstanceObject) -> None        
+                                     cell: InstanceObject) -> None
         This function will load the workflow in another location. It will not
-        update provenance, because provenance already exists. So it will 
+        update provenance, because provenance already exists. So it will
         basically update the CellLocation modules of the workflow with the new
         locations in place without generating actions.
         It will also update the cell object with the variables and plot types so
         this information must also be extracted from the workflow
-         
+
         """
         from packages.spreadsheet.basic_widgets import CellLocation
         cell_locations = CDMSPipelineHelper.find_modules_by_type(pipeline, [CellLocation])
         plot_modules = CDMSPipelineHelper.find_modules_by_type(pipeline, [ CDMSPlot, CDMS3DPlot ])
-        
+
         #sort plot modules based on order
         fn = lambda x: PlotPipelineHelper.get_value_from_function(x, "plotOrder")
         plot_modules.sort(key=fn, reverse=False)
-        
+
         # we assume that there is only one CellLocation and one SpreadsheetCell
         # update location values in place.
         loc_module = cell_locations[0]
@@ -631,7 +631,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                 loc_module.functions[i].params[0].strValue = str(row+1)
             elif loc_module.functions[i].name == "Column":
                 loc_module.functions[i].params[0].strValue = str(col+1)
-                    
+
         # Update project controller cell information
         cell.clear_plots()
         cell.clear_queues()
@@ -639,23 +639,23 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             gmName = CDMSPipelineHelper.get_graphics_method_name_from_module(pl_module)
             ptype = CDMSPipelineHelper.get_plot_type_from_module(pl_module)
             cell.add_plot(get_plot_manager().new_plot(plot_type, ptype, gmName))
-            
+
         for plot in plot_modules:
-            vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(controller, 
-                                                                       pipeline, 
+            vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(controller,
+                                                                       pipeline,
                                                                        plot.id)
             for var in vars:
                 cell.add_variable(CDMSPipelineHelper.get_variable_name_from_module(var))
-            
+
 #    @staticmethod
 #    def update_pipeline_action(controller, version, plot_modules):
 #        pipeline = controller.vistrail.getPipeline(version)
 #        pip_plots =  CDMSPipelineHelper.find_plot_modules(pipeline)
 #        cell = CDMSPipelineHelper.find_module_by_name(pipeline, 'CDMSCell')
-#        
+#
 #        pip_plot_map = {}
 #        plot_map = {}
-#        
+#
 #        to_be_added = []
 #        for pm in pip_plots:
 #            pip_plot_map[pm.id] = pm
@@ -671,10 +671,10 @@ class CDMSPipelineHelper(PlotPipelineHelper):
 #            action = controller.delete_module_list(to_be_removed)
 #            version = action.id
 #            pipeline = controller.vistrail.getPipeline(version)
-#            
-#        
+#
+#
 #        ops = []
-#        conns_to = controller.get_connections_to(pipeline,[cell.id],"plot")    
+#        conns_to = controller.get_connections_to(pipeline,[cell.id],"plot")
 #        for conn in conns_to:
 #            if conn.source.moduleId not in to_be_removed:
 #                ops.append(('delete',conn.id))
@@ -684,7 +684,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
 #            conn = controller.create_connection(m, 'self',
 #                                                cell, 'plot')
 #            ops.append('add',conn)
-#        
+#
 #        action = core.db.action.create_action(ops)
 #        controller.change_selected_version(version)
 #        controller.add_new_action(action)
@@ -695,14 +695,14 @@ class CDMSPipelineHelper(PlotPipelineHelper):
     def change_parameters( parmRecList, controller=None ):
         import api
         """change_parameters(
-                            parmRecList: [ ( function_name: str, param_list: list(str) ) ] 
+                            parmRecList: [ ( function_name: str, param_list: list(str) ) ]
                             controller: VistrailController,
                             ) -> None
         Note: param_list is a list of strings no matter what the parameter type!
-        """   
+        """
         proj_controller = api.get_current_project_controller()
         (sheetName, row, col) = proj_controller.get_current_cell_info()
-        
+
         if controller is None:
             if proj_controller == None:
                 controller = api.get_current_controller()
@@ -710,15 +710,15 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                 current_version = controller.current_version
             else:
                 cell = proj_controller.sheet_map[ sheetName ][ (row, col) ]
-                current_version = cell.current_parent_version 
-                controller =  proj_controller.vt_controller 
+                current_version = cell.current_parent_version
+                controller =  proj_controller.vt_controller
                 controller.change_selected_version( current_version )
 
-        
+
         pipeline = controller.vistrail.getPipeline(current_version)
         plot_modules = CDMSPipelineHelper.find_modules_by_type(pipeline, [CDMSPlot,CDMS3DPlot])
         if len( plot_modules ):
-                 
+
     #
     #         try:
     # #            ( sheetName, cell_address ) = DV3DPipelineHelper.getCellCoordinates( self.moduleID )
@@ -727,14 +727,14 @@ class CDMSPipelineHelper(PlotPipelineHelper):
     #                 controller = self.get_current_controller()
     #             else:
     #                 if ( sheetName <> proj_controller.current_sheetName ): return
-    #                 controller =  proj_controller.vt_controller 
+    #                 controller =  proj_controller.vt_controller
     #                 if self.update_proj_controller:
     #                     pcoords =list( proj_controller.current_cell_coords ) if proj_controller.current_cell_coords else None
     #                     if not pcoords or ( pcoords[0] <> cell_address[0] ) or ( pcoords[1] <> cell_address[1] ):
     #                         proj_controller.current_cell_changed(  sheetName, cell_address[0], cell_address[1]  )
-    #                     else: pcoords = None 
+    #                     else: pcoords = None
     #                 cell = proj_controller.sheet_map[ sheetName ][ cell_address ]
-    #                 current_version = cell.current_parent_version 
+    #                 current_version = cell.current_parent_version
     #                 controller.change_selected_version( current_version )
     #             pipeline = controller.vistrail.getPipeline( current_version )
     #         except Exception, err:
@@ -743,11 +743,11 @@ class CDMSPipelineHelper(PlotPipelineHelper):
     #             proj_controller = None
     #             current_version = controller.current_version
     #             cell_address = ( None, None )
-    #             
+    #
     #         try:
-    #             module = pipeline.modules[self.moduleID] 
+    #             module = pipeline.modules[self.moduleID]
     #         except KeyError:
-    #             print>>sys.stderr, "Error changing parameter in module %d (%s), parm: %s: Module not in current controller pipeline." % ( self.moduleID, self.__class__.__name__, str(parmRecList) )  
+    #             print>>sys.stderr, "Error changing parameter in module %d (%s), parm: %s: Module not in current controller pipeline." % ( self.moduleID, self.__class__.__name__, str(parmRecList) )
     #             return
             try:
                 constit_values = []
@@ -755,7 +755,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                 config_list = []
                 op_list = []
     #            print "Module[%d]: Persist Parameter: %s, controller: %x " % ( self.moduleID, str(parmRecList), id(controller) )
-                for parmRec in parmRecList: 
+                for parmRec in parmRecList:
                     try:
                         function = parmRec[0]
                         print "Persist parameter: %s-> %s " % ( function, str(parmRec[1]) )
@@ -764,35 +764,35 @@ class CDMSPipelineHelper(PlotPipelineHelper):
 
                     except MissingPort:
                         print "Need to add input port %s in controller, parmRecList = %s " % ( parmRec[0], str( parmRecList ) )
-                        
+
     #                    print>>sys.stderr, "Unrecognized config function %s in module %d (%s)" % ( parmRec[0], self.moduleID, self.__class__.__name__ )
-                action = core.db.action.create_action( op_list ) 
+                action = core.db.action.create_action( op_list )
                 controller.add_new_action(action)
                 controller.perform_action(action)
-                                  
+
                 if proj_controller:
                     proj_controller.cell_was_changed(action)
                     proj_controller.current_cell_changed(  sheetName, row, col )
 
 #                print "Performed action, current controller version: ", str( controller.current_version )
-                    
+
             except Exception, err:
                 print>>sys.stderr, "Error changing parameter in plot module. parm: %s, error: %s" % ( str(parmRecList), str(err) )
                 traceback.print_exc()
-        
+
     @classmethod
     def build_python_script_from_pipeline( klass, controller, version, plot_objs=[]):
         """build_python_script_from_pipeline(controller, version, plot_objs) -> str
-           
+
            This will build the corresponding python script for the pipeline
            identified by version in the controller. In this implementation,
            plot_objs list is ignored.
-           
+
         """
 
         pipeline = controller.vistrail.getPipeline(version)
         plots = klass.find_plot_modules(pipeline)
-       
+
 #        text = "from PyQt4 import QtCore, QtGui\n"
         text = "import cdms2, cdutil, genutil\n"
         text += "import vcs\n\n"
@@ -800,13 +800,13 @@ class CDMSPipelineHelper(PlotPipelineHelper):
         text += "    import sys\n"
 #        text += "    app = QtGui.QApplication(sys.argv)\n"
         ident = '    '
-        
+
         var_op_modules = CDMSPipelineHelper.find_topo_sort_modules_by_types( pipeline, [CDMSVariable,   CDMSVariableOperation] )
         for m in var_op_modules:
             desc = m.module_descriptor.module
             mobj = desc.from_module(m)
             text += mobj.to_python_script(ident=ident)
-        vnames = []        
+        vnames = []
         text += ident + "canvas = vcs.init()\n"
         for mplot in plots:
             plot = mplot.module_descriptor.module.from_module(mplot)
@@ -815,7 +815,7 @@ class CDMSPipelineHelper(PlotPipelineHelper):
             for varm in CDMSPipelineHelper.find_variables_connected_to_plot_module(controller, pipeline, mplot.id):
                 vname = CDMSPipelineHelper.get_variable_name_from_module(varm)
                 text += ident + "args.append(%s)\n" % vname
-                vnames.append( vname )    
+                vnames.append( vname )
 #                desc = varm.module_descriptor
 #                if issubclass(desc.module, CDMSVariable):
 #                    var = CDMSVariable.from_module(varm)
@@ -823,38 +823,38 @@ class CDMSPipelineHelper(PlotPipelineHelper):
 #                else:
 #                    #operation
 #                    op = desc.module.from_module(varm)
-#                    text += ident + "args.append(%s)\n"%op.varname 
+#                    text += ident + "args.append(%s)\n"%op.varname
 
             #set colormap for this plot
             #TODO: support unique colormaps for both variables
             conns = controller.get_connections_to(pipeline, [mplot.id], port_name="colorMap")
             if len(conns) > 0:
-                varc = pipeline.modules[conns[0].source.moduleId] 
+                varc = pipeline.modules[conns[0].source.moduleId]
                 if varc.colorMapName is not None:
                     text += ident + "canvas.setcolormap(\"%s\")\n" % varc.colorMapName
-                    
+
                     if varc.colorCells is not None and len(varc.colorCells) > 0:
                         for (n,r,g,b) in varc.colorCells:
                             text += ident + "canvas.canvas.setcolorcell(%i,%i,%i,%i)\n"%(n,r,g,b)
-                        text += ident + "canvas.canvas.updateVCSsegments(canvas.mode)\n" 
+                        text += ident + "canvas.canvas.updateVCSsegments(canvas.mode)\n"
                         text += ident + "canvas.flush()\n"
-             
+
             if plot.plot_type.lower().startswith('3d'):
-                ( row, col ) = klass.getCellLoc( pipeline )      
+                ( row, col ) = klass.getCellLoc( pipeline )
                 plotApps = klass.getPlotApps( row, col )
                 for pApp in plotApps:
                     cData = pApp.getConfigurationData( cell=(row,col) )
                     for [k,kval] in cData:
                         param_values = []
-                        if len(kval): 
+                        if len(kval):
                             param_values.append( str(kval) )
                         state = pApp.getConfigurationState( k, cell=(row,col) )
-                        if state: 
-                            param_values.append( ' vcs.on' if ( state == 1 ) else " {'state' : %d }" % state )  
-                        if len( param_values ): 
-                            key = k.split('(')[0]                      
+                        if state:
+                            param_values.append( ' vcs.on' if ( state == 1 ) else " {'state' : %d }" % state )
+                        if len( param_values ):
+                            key = k.split('(')[0]
                             text += ident + "gm%s.%s = %s\n" % (plot.plot_type,  k, ','.join( param_values ) )
-                            
+
             elif (plot.graphics_method_name != 'default'):
                 for k in plot.gm_attributes:
                     if hasattr(plot,k):
@@ -863,10 +863,10 @@ class CDMSPipelineHelper(PlotPipelineHelper):
                             text += ident + "gm%s.%s = '%s'\n" % (plot.plot_type,  k, kval)
                         else:
                             text += ident + "gm%s.%s = %s\n" % (plot.plot_type, k,  kval)
-                            
+
 #                        if k in ['level_1', 'level_2', 'color_1',
 #                                 'color_2', 'legend', 'levels',
-#                                 'missing', 'datawc_calendar', 'datawc_x1', 
+#                                 'missing', 'datawc_calendar', 'datawc_x1',
 #                                 'datawc_x2', 'datawc_y1', 'datawc_y2',
 #                                 'fillareacolors', 'fillareaindices']:
 #                            text += ident + "gm%s.%s = %s\n"%(plot.plot_type,
@@ -875,36 +875,36 @@ class CDMSPipelineHelper(PlotPipelineHelper):
 #                            text += ident + "gm%s.%s = '%s'\n"%(plot.plot_type,
 #                                                            k, getattr(plot,k))
 
-            text += ident + "kwargs = %s\n" % str(plot.kwargs) 
-            text += ident + "kwargs[ 'cdmsfile' ] = cdmsfile.id\n" 
-            text += ident + "args.append( gm%s )\n" % (plot.plot_type) 
+            text += ident + "kwargs = %s\n" % str(plot.kwargs)
+            text += ident + "kwargs[ 'cdmsfile' ] = cdmsfile.id\n"
+            text += ident + "args.append( gm%s )\n" % (plot.plot_type)
             text += ident + "canvas.plot( *args, **kwargs )\n"
-        text += ident + 'canvas.interact()'           
+        text += ident + 'canvas.interact()'
         return text
-    
-    @staticmethod    
+
+    @staticmethod
     def get_graphics_method_name_from_module(module):
-        result = CDMSPipelineHelper.get_value_from_function(module, 
+        result = CDMSPipelineHelper.get_value_from_function(module,
                                                               "graphicsMethodName")
         if result == None:
             result = 'default'
-        
+
         return result
-    
-    @staticmethod    
+
+    @staticmethod
     def get_plot_type_from_module(module):
         desc = module.module_descriptor.module
         return desc.plot_type
-    
-    @staticmethod    
+
+    @staticmethod
     def get_template_name_from_module(module):
-        result = CDMSPipelineHelper.get_value_from_function(module, 
+        result = CDMSPipelineHelper.get_value_from_function(module,
                                                               "template")
         if result == None:
             result = 'starter'
-        
+
         return result
-    
+
     @staticmethod
     def get_variable_name_from_module(module):
         desc = module.module_descriptor.module
@@ -1080,24 +1080,24 @@ class CDMSPlotWidget(QtGui.QWidget):
         self.version = version
         self.plots = plot_list
         self.varWidget = None
-        
+
         #sort plot modules by order
         fn = lambda x: PlotPipelineHelper.get_value_from_function(x, "plotOrder")
         self.plots.sort(key=fn, reverse=False)
-        
+
         #find variable widget
         for wid in QApplication.topLevelWidgets():
             varWidget = wid.findChild(QDefinedVariableWidget)
             if varWidget is not None:
                 self.varWidget = varWidget
                 break;
-        
+
         self.to_be_added = []
         self.to_be_removed = []
         self.var_to_be_added = []
         self.var_to_be_removed = []
         self.vars_were_changed = False
-        
+
 #        self.tab_widget = QtGui.QTabWidget(self)
 #        self.tab_widget.setDocumentMode(True)
 #        self.tab_widget.setTabPosition(QtGui.QTabWidget.North)
@@ -1111,17 +1111,17 @@ class CDMSPlotWidget(QtGui.QWidget):
         main_layout.setSpacing(2)
         self.create_plot_widget()
         self.create_var_widget(cell)
-        
+
         var_label = QtGui.QLabel("Variables used in this visualization:")
         plot_label = QtGui.QLabel("Plots used in this visualization")
 
         self.vars_were_changed = False
-        
+
         main_layout.addWidget(var_label)
         main_layout.addWidget(self.var_widget)
         main_layout.addWidget(plot_label)
         main_layout.addWidget(self.plot_widget)
-        
+
         b_layout = QtGui.QHBoxLayout()
         b_layout.setMargin(5)
         b_layout.addStretch()
@@ -1142,7 +1142,7 @@ class CDMSPlotWidget(QtGui.QWidget):
 
     def clearWidget(self):
         print " ------------- clearWidget ------------- "
-        
+
     def update_version(self, version, plot_list, var_list):
         self.version = version
         self.plots = plot_list
@@ -1164,7 +1164,7 @@ class CDMSPlotWidget(QtGui.QWidget):
         item = self.plot_table.selectedItems()[0]
         self.update_move_buttons(item)
         self.update_plot_vars(item)
-        
+
     def create_var_widget(self, cell):
         self.var_widget = QtGui.QWidget()
         self.var_table = VarTableWidget(cell, self)
@@ -1176,20 +1176,20 @@ class CDMSPlotWidget(QtGui.QWidget):
 #        btn_layout.addWidget(self.btn_add_var)
 #        btn_layout.addWidget(self.btn_del_var)
 #        btn_layout.addStretch()
-        
+
         self.var_layout = QtGui.QVBoxLayout()
         self.var_layout.setMargin(2)
         self.var_layout.setSpacing(2)
         self.var_layout.addWidget(self.var_table)
 #        self.var_layout.addLayout(btn_layout)
         self.var_widget.setLayout(self.var_layout)
-        
+
         #signals
 #        self.var_table.itemSelectionChanged.connect(self.update_btn_del_var_state)
 #        self.btn_add_var.clicked.connect(self.add_var)
 #        self.btn_del_var.clicked.connect(self.remove_var)
 #        self.var_table.populate_from_vars(self.vars)
-        
+
     def create_plot_widget(self):
         self.plot_widget = QtGui.QWidget()
         self.btn_move_up = QtGui.QToolButton(self)
@@ -1203,7 +1203,7 @@ class CDMSPlotWidget(QtGui.QWidget):
         b_layout.addWidget(self.btn_move_up)
         b_layout.addWidget(self.btn_move_down)
         b_layout.addStretch()
-        self.plot_table = PlotTableWidget(self.plots, self.proj_controller, 
+        self.plot_table = PlotTableWidget(self.plots, self.proj_controller,
                                           self.version, self)
         h_layout = QtGui.QHBoxLayout()
         h_layout.addLayout(b_layout)
@@ -1237,7 +1237,7 @@ class CDMSPlotWidget(QtGui.QWidget):
         stacked_widget = self.create_conf_widgets()
         self.v_layout.addWidget(stacked_widget)
         self.plot_widget.setLayout(self.v_layout)
-         
+
         #signals
         self.plot_table.itemSelectionChanged.connect(self.update_conf_widget)
         self.template_edt.editingFinished.connect(self.template_edited)
@@ -1248,16 +1248,16 @@ class CDMSPlotWidget(QtGui.QWidget):
         self.plot_table.populate_from_plots(self.plots)
         self.plot_table.itemOrderChanged.connect(self.update_move_buttons)
         self.update_btn_del_state()
-        
+
     def create_plot_vars_widget(self):
         self.plot_vars_widget = QtGui.QGroupBox("Variables (drag from the list above)")
         self.var1_label = QtGui.QLabel("Variable 1:")
         self.var1_edt = DropVarLineEdit(0)
         self.var2_label = QtGui.QLabel("Variable 2:")
         self.var2_edt = DropVarLineEdit(1)
-        self.connect(self.var1_edt, QtCore.SIGNAL("dropped_var"), 
+        self.connect(self.var1_edt, QtCore.SIGNAL("dropped_var"),
                      self.variable_dropped)
-        self.connect(self.var2_edt, QtCore.SIGNAL("dropped_var"), 
+        self.connect(self.var2_edt, QtCore.SIGNAL("dropped_var"),
                      self.variable_dropped)
         self.var1_edt.editingFinished.connect(self.variable1_edited)
         self.var2_edt.editingFinished.connect(self.variable2_edited)
@@ -1308,7 +1308,7 @@ class CDMSPlotWidget(QtGui.QWidget):
     def askToSaveChanges(self):
         #FIXME: Check if there were changes and save them
         pass
-    
+
     def connect_signals(self, conf_widget):
         if type(conf_widget) == GraphicsMethodConfigurationWidget:
             self.connect(conf_widget, QtCore.SIGNAL("stateChanged"),
@@ -1317,7 +1317,7 @@ class CDMSPlotWidget(QtGui.QWidget):
         if type(conf_widget) == GraphicsMethodConfigurationWidget:
             self.disconnect(conf_widget, QtCore.SIGNAL("stateChanged"),
                             self.state_changed)
-            
+
     @pyqtSlot(Module, int)
     def variable_dropped(self, var, order):
         self.var_to_be_added.append(var)
@@ -1327,7 +1327,7 @@ class CDMSPlotWidget(QtGui.QWidget):
         if plot_item.vars[order] != var:
             plot_item.vars[order] = var
             self.vars_were_changed = True
-        
+
     @pyqtSlot()
     def variable1_edited(self):
         varName = str(self.var1_edt.text())
@@ -1336,7 +1336,7 @@ class CDMSPlotWidget(QtGui.QWidget):
         else:
             plot_item = self.plot_table.selectedItems()[0]
             self.update_plot_vars(plot_item)
-                
+
     @pyqtSlot()
     def variable2_edited(self):
         varName = str(self.var1_edt.text())
@@ -1344,35 +1344,35 @@ class CDMSPlotWidget(QtGui.QWidget):
             self.variable_dropped(varName, 1)
         else:
             plot_item = self.plot_table.selectedItems()[0]
-            self.update_plot_vars(plot_item)  
-        
+            self.update_plot_vars(plot_item)
+
     @pyqtSlot()
     def template_edited(self):
         from init import get_canvas
         template_list = get_canvas().listelements("template")
         template = str(self.template_edt.text())
-        if template in template_list: 
+        if template in template_list:
             plot_item = self.plot_table.selectedItems()[0]
             plot_item.template = template
-            
+
     def update_btn_del_state(self):
-        if (len(self.plot_table.selectedItems()) > 0 and 
+        if (len(self.plot_table.selectedItems()) > 0 and
             self.plot_table.topLevelItemCount() > 1):
             self.btn_del_plot.setEnabled(True)
         else:
             self.btn_del_plot.setEnabled(False)
-            
+
 #    def update_btn_del_var_state(self):
 #        varnum = 1
 #        for i in range(self.plot_table.topLevelItemCount()):
 #            item = self.plot_table.topLevelItem(i)
 #            varnum = max(varnum,item.reg_plot.varnum)
-#        if (len(self.var_table.selectedItems()) > 0 and 
+#        if (len(self.var_table.selectedItems()) > 0 and
 #            self.var_table.topLevelItemCount() > varnum):
 #            self.btn_del_var.setEnabled(True)
 #        else:
 #            self.btn_del_var.setEnabled(False)
-            
+
     def update_move_buttons(self, item):
         if item is None:
             self.btn_move_up.setEnabled(False)
@@ -1386,19 +1386,19 @@ class CDMSPlotWidget(QtGui.QWidget):
             self.btn_move_down.setEnabled(False)
         else:
             self.btn_move_down.setEnabled(True)
-            
+
     def update_plot_vars(self, item):
         if item is None:
             self.plot_vars_widget.setVisible(False)
             return
-        
+
         self.show_vars(item.reg_plot.varnum)
         if len(item.vars) > 0:
             self.var1_edt.setText(item.vars[0])
         if len(item.vars) > 1:
             self.var2_edt.setText(item.vars[1])
         self.template_edt.setText(item.template)
-            
+
     def show_vars(self, num):
         self.var1_edt.setText("")
         self.var2_edt.setText("")
@@ -1413,19 +1413,19 @@ class CDMSPlotWidget(QtGui.QWidget):
             self.var1_edt.setVisible(True)
             self.var2_label.setVisible(True)
             self.var2_edt.setVisible(True)
-        
-            
+
+
     def configure_done(self):
         canceled = []
         action = None
-        
+
         for a in self.to_be_added:
             if a in self.to_be_removed:
                 canceled.append(a)
         for m in canceled:
             self.to_be_added.remove(m)
             self.to_be_removed.remove(m)
-        
+
         canceled = []
         for v in self.var_to_be_added:
             if v in self.var_to_be_removed:
@@ -1460,7 +1460,7 @@ class CDMSPlotWidget(QtGui.QWidget):
                     function_updates[plot_module.id] = functions
 
         if (len(self.to_be_added) != 0 or len(self.to_be_removed) != 0 or
-            len(self.var_to_be_added) != 0 or len(self.var_to_be_removed) != 0 
+            len(self.var_to_be_added) != 0 or len(self.var_to_be_removed) != 0
             or self.plot_order_changed() or self.vars_were_changed or
             len(function_updates) > 0):
             sheetName = self.proj_controller.current_sheetName
@@ -1476,11 +1476,11 @@ class CDMSPlotWidget(QtGui.QWidget):
             version = action.id
             pipeline = self.controller.vistrail.getPipeline(version)
             plots = CDMSPipelineHelper.find_plot_modules(pipeline)
-            vars = CDMSPipelineHelper.find_modules_by_type(pipeline, 
+            vars = CDMSPipelineHelper.find_modules_by_type(pipeline,
                                         [CDMSVariable, CDMSVariableOperation])
             self.controller.change_selected_version(version)
             self.update_version(version, plots, vars)
-            
+
     def plot_order_changed(self):
         plot_modules = self.plot_table.get_plots()
         changed = False
@@ -1488,56 +1488,56 @@ class CDMSPlotWidget(QtGui.QWidget):
             if p.id != cp.id:
                 changed = True
         return changed
-        
+
     def state_changed(self):
         self.emit(QtCore.SIGNAL("stateChanged"))
-        
+
     @pyqtSlot(bool)
     def add_plot(self, checked):
         dialog = AddCDMSPlotDialog(self)
         if dialog.exec_() == QtGui.QDialog.Accepted:
             plot = dialog.plot
-            plot_module = CDMSPipelineHelper.create_plot_module(self.controller, 
-                                                                plot.parent, 
+            plot_module = CDMSPipelineHelper.create_plot_module(self.controller,
+                                                                plot.parent,
                                                                 plot.name)
             self.add_conf_widget(plot_module)
             self.plot_table.add_plot_item(plot_module, copy_vars=True)
             self.to_be_added.append(plot_module.id)
         self.update_btn_del_state()
-        
+
     @pyqtSlot(bool)
     def remove_plot(self, checked):
         module = self.plot_table.remove_current_item()
         if module:
             self.to_be_removed.append(module.id)
         self.update_btn_del_state()
-        
+
 #    @pyqtSlot(bool)
 #    def add_var(self, checked):
 #        var_list = self.var_table.get_varname_list()
 #        dialog = AddCDMSVarDialog(self.proj_controller, var_list, self)
 #        if dialog.exec_() == QtGui.QDialog.Accepted:
 #            varName = dialog.varName
-#            var_module = dialog.var 
+#            var_module = dialog.var
 #            self.var_table.add_var_item(var_module)
 #        self.update_btn_del_var_state()
-        
+
 #    @pyqtSlot(bool)
 #    def remove_var(self, checked):
 #        module = self.var_table.remove_current_item()
 #        if module:
 #            self.var_to_be_removed.append(module.id)
 #        self.update_btn_del_var_state()
-        
+
     def update_pipeline(self, action=None, function_updates=[]):
 #        var_modules = self.var_table.get_vars()
 #        connections = self.plot_table.get_connections()
-        
+
 
         if action is not None:
             version = action.id
         else:
-            version = self.version        
+            version = self.version
 
         plot_modules = []
 
@@ -1550,10 +1550,10 @@ class CDMSPlotWidget(QtGui.QWidget):
             if plot.id not in self.to_be_removed:
                 plot_modules.append(plot)
 
-        action = CDMSPipelineHelper.rebuild_pipeline_action(self.proj_controller, 
-                                                            version, 
-                                                            plot_modules) 
-                                                            #var_modules, 
+        action = CDMSPipelineHelper.rebuild_pipeline_action(self.proj_controller,
+                                                            version,
+                                                            plot_modules)
+                                                            #var_modules,
                                                             #connections)
 
         ops = []
@@ -1579,9 +1579,9 @@ class CDMSPlotWidget(QtGui.QWidget):
             self.controller.change_selected_version(version)
             self.controller.add_new_action(action)
             self.controller.perform_action(action)
-        
+
         return action
-    
+
     def update_templates(self, ori_action):
         return ori_action #templates should not change in uvcdat gui
 #        if ori_action is not None:
@@ -1596,20 +1596,20 @@ class CDMSPlotWidget(QtGui.QWidget):
 #            if plot_item.module.id in pipeline.modules:
 #                plot_module = pipeline.modules[plot_item.module.id]
 #                functions = [('template', [plot_item.template])]
-#                action = self.controller.update_functions(plot_module, 
+#                action = self.controller.update_functions(plot_module,
 #                                                          functions)
 #                if action is not None:
 #                    version = action.id
-#        
+#
 #        if action is not None:
 #            return action
 #        else:
 #            return ori_action
-            
+
     @pyqtSlot(bool)
     def save_triggered(self, checked):
         self.configure_done()
-    
+
     @pyqtSlot(bool)
     def reset_triggered(self, checked):
         # FIXME why is this not implemented?
@@ -1619,17 +1619,17 @@ class PlotTableWidgetItem(QtGui.QTreeWidgetItem):
     def __init__(self, parent, order, module, labels, plot_type, gm_name, vars,
                  reg_plot, template):
         QtGui.QTreeWidgetItem.__init__(self, parent, labels)
-        self.module = module    
+        self.module = module
         self.order = order
         self.plot_type = plot_type
         self.gm_name = gm_name
         self.vars = vars
         self.reg_plot = reg_plot
         self.template = template
-    
+
 class PlotTableWidget(QtGui.QTreeWidget):
     itemOrderChanged = pyqtSignal(PlotTableWidgetItem)
-    def __init__(self,plot_list, proj_controller, version, parent=None):    
+    def __init__(self,plot_list, proj_controller, version, parent=None):
         QtGui.QTreeWidget.__init__(self, parent)
         self.plots = plot_list
         self.proj_controller = proj_controller
@@ -1642,7 +1642,7 @@ class PlotTableWidget(QtGui.QTreeWidget):
         self.setHeaderLabels(QtCore.QStringList() << "Order" << "Plot Type" << "Graphics Method" << "Template")
         self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        
+
     def populate_from_plots(self,plots=None, selected=None):
         if plots is not None:
             self.plots = plots
@@ -1658,7 +1658,7 @@ class PlotTableWidget(QtGui.QTreeWidget):
                 #select first element
                 if item.module == self.plots[0]:
                     self.setItemSelected(item,True)
-            
+
     def create_plot_item(self, order, plot_module, copy_vars=False, new_plot=False):
         manager = get_plot_manager()
         desc = plot_module.module_descriptor.module()
@@ -1668,8 +1668,8 @@ class PlotTableWidget(QtGui.QTreeWidget):
                                          str(template)
         pipeline = self.controller.vistrail.getPipeline(self.version)
         if plot_module.id in pipeline.modules:
-            _vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(self.controller, 
-                                                                               pipeline, 
+            _vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(self.controller,
+                                                                               pipeline,
                                                                                plot_module.id)
         else:
             _vars = []
@@ -1677,13 +1677,13 @@ class PlotTableWidget(QtGui.QTreeWidget):
                 plot_modules = CDMSPipelineHelper.find_plot_modules(pipeline)
                 if len(plot_modules) > 0:
                     p_module = plot_modules[0]
-                    _vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(self.controller, 
-                                                                                        pipeline, 
+                    _vars = CDMSPipelineHelper.find_variables_connected_to_plot_module(self.controller,
+                                                                                        pipeline,
                                                                                         p_module.id)
         varNames = []
         for var_module in _vars:
             varNames.append(CDMSPipelineHelper.get_variable_name_from_module(var_module))
-                      
+
         if new_plot:
             reg_plot = manager.new_plot_by_name(desc.plot_type, gm_name)
         else:
@@ -1691,17 +1691,17 @@ class PlotTableWidget(QtGui.QTreeWidget):
             (row, col) = self.proj_controller.current_cell_coords
             cell = self.proj_controller.sheet_map[sheetName][(row,col)]
             reg_plot = cell.plots[order]
-        item = PlotTableWidgetItem(self, order, plot_module, labels, 
+        item = PlotTableWidgetItem(self, order, plot_module, labels,
                                    desc.plot_type, gm_name, varNames, reg_plot, template)
         item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable)
         return item
-    
+
     def add_plot_item(self, plot_module, copy_vars=False):
         order = self.topLevelItemCount()
         self.plots.append(plot_module)
         item = self.create_plot_item(order,plot_module, copy_vars, True)
         self.setCurrentItem(item)
-    
+
     @pyqtSlot(bool)
     def move_item_up(self, checked):
         self.blockSignals(True)
@@ -1713,7 +1713,7 @@ class PlotTableWidget(QtGui.QTreeWidget):
         self.update_item_ordering()
         self.blockSignals(False)
         self.itemOrderChanged.emit(item)
-    
+
     @pyqtSlot(bool)
     def move_item_down(self, checked):
         self.blockSignals(True)
@@ -1725,13 +1725,13 @@ class PlotTableWidget(QtGui.QTreeWidget):
         self.update_item_ordering()
         self.blockSignals(False)
         self.itemOrderChanged.emit(item)
-        
+
     def update_item_ordering(self):
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             item.setText(0,str(i+1))
             item.order = i
-            
+
     def remove_current_item(self):
         item = self.selectedItems()[0]
         index = self.indexOfTopLevelItem(item)
@@ -1744,7 +1744,7 @@ class PlotTableWidget(QtGui.QTreeWidget):
             sel_item = self.topLevelItem(index)
             self.setItemSelected(sel_item, True)
         return item.module
-    
+
     def remove_plot_by_id(self, _id):
         found = None
         for plot in self.plots:
@@ -1753,14 +1753,14 @@ class PlotTableWidget(QtGui.QTreeWidget):
                 break
         if found is not None:
             self.plots.remove(found)
-        
+
     def get_plots(self):
         plots = []
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             plots.append(item.module)
         return plots
-    
+
 #    def get_connections(self):
 #        conns = []
 #        for i in range(self.topLevelItemCount()):
@@ -1768,11 +1768,11 @@ class PlotTableWidget(QtGui.QTreeWidget):
 #            if len(item.vars) >= 1:
 #                conns.append((item.vars[0], 'self', item.module, 'variable'))
 #            if len(item.vars) > 1:
-#                conns.append((item.vars[1], 'self', item.module, 'variable2'))            
+#                conns.append((item.vars[1], 'self', item.module, 'variable2'))
 #        return conns
-        
+
 class VarTableWidget(QtGui.QTreeWidget):
-    def __init__(self, cell, parent=None):    
+    def __init__(self, cell, parent=None):
         QtGui.QTreeWidget.__init__(self, parent)
         self.vars = []
         self.setSizePolicy(QtGui.QSizePolicy.Expanding,
@@ -1785,7 +1785,7 @@ class VarTableWidget(QtGui.QTreeWidget):
         self.setAcceptDrops(False)
         self.cell = cell
         self.populate_from_cell()
-        
+
 #    def populate_from_vars(self, _vars=None):
 #        if _vars is not None:
 #            self.vars = _vars
@@ -1799,44 +1799,44 @@ class VarTableWidget(QtGui.QTreeWidget):
 #                item = self.create_var_item(self.vars[i])
 #                if i == 0:
 #                    self.setItemSelected(item,True)
-                
+
     def populate_from_cell(self, cell=None):
         if cell is not None:
             self.cell = cell
-        
+
         varDict = {}
         for var in self.cell.variables():
             if var not in varDict:
                 varDict[var] = True
                 self.addTopLevelItem(self.create_var_item(var))
-            
+
     def mimeData(self, itemList):
-        """ mimeData(itemList) -> None        
+        """ mimeData(itemList) -> None
         Setup the mime data to contain empty data and varname as text
-        
+
         """
         data = QtGui.QTreeWidget.mimeData(self, itemList)
         data.setData("definedVariables", QtCore.QByteArray())
         data.setText(itemList[0].text(0))
         return data
-    
+
     def create_var_item(self, varname):
         item = QtGui.QTreeWidgetItem(QtCore.QStringList() << str(varname))
         item.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable |
                       QtCore.Qt.ItemIsDragEnabled | QtCore.Qt.ItemIsDropEnabled)
         return item
-    
+
 #    def add_var_item(self, varName):
 #        self.vars.append(varName)
 #        self.create_var_item(varName)
-        
+
 #    def remove_current_item(self):
 #        item = self.selectedItems()[0]
 #        index = self.indexOfTopLevelItem(item)
 #        item = self.takeTopLevelItem(index)
 #        self.remove_var_by_id(item.module.id)
 #        return item.module
-#        
+#
 #    def remove_var_by_id(self, _id):
 #        found = None
 #        for var in self.vars:
@@ -1845,34 +1845,34 @@ class VarTableWidget(QtGui.QTreeWidget):
 #                break
 #        if var is not None:
 #            self.vars.remove(found)
-            
+
     def get_varname_list(self):
         var_list = []
         for i in range(self.topLevelItemCount()):
             item = self.topLevelItem(i)
             var_list.append(item.text(0))
         return var_list
-    
+
 #    def get_vars(self):
 #        vars = []
 #        for i in range(self.topLevelItemCount()):
 #            item = self.topLevelItem(i)
 #            vars.append(item.module)
 #        return vars
-    
+
 #    def get_var_by_name(self, name):
 #        for i in range(self.topLevelItemCount()):
 #            item = self.topLevelItem(i)
 #            if item.varname == name:
 #                return item.module
 #        return None
-    
+
 #class VarTableWidgetItem(QtGui.QTreeWidgetItem):
 #    def __init__(self, parent, module, labels, varname):
 #        QtGui.QTreeWidgetItem.__init__(self, parent, labels)
-#        self.module = module    
+#        self.module = module
 #        self.varname = varname
-        
+
 class CDMSTreeWidget(QtGui.QTreeWidget):
     def __init__(self, parent=None):
         super(CDMSTreeWidget, self).__init__(parent)
@@ -1882,18 +1882,18 @@ class CDMSTreeWidget(QtGui.QTreeWidget):
         self.setAcceptDrops(False)
         self.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.create_tree()
-        
+
     def create_tree(self):
         registry = get_plot_registry()
         for plottype in sorted(registry.plots["VCS"].keys()):
-            item = QtGui.QTreeWidgetItem(self, 
+            item = QtGui.QTreeWidgetItem(self,
                                          QtCore.QStringList(plottype),
                                          1)
             item.setFlags(item.flags() & ~QtCore.Qt.ItemIsSelectable)
             ## Special section here for VCS GMs they have one more layer
             for plot in sorted(registry.plots["VCS"][plottype].itervalues(),
                                key=lambda x: x.name):
-                item2 = PlotTreeWidgetItem(plottype, plot.name, 
+                item2 = PlotTreeWidgetItem(plottype, plot.name,
                                            QtCore.QStringList(plot.name),
                                            2, plot, item)
 class AddCDMSPlotDialog(QtGui.QDialog):
@@ -1917,17 +1917,17 @@ class AddCDMSPlotDialog(QtGui.QDialog):
         self.btn_ok.clicked.connect(self.btn_ok_clicked)
         self.btn_cancel.clicked.connect(self.btn_cancel_clicked)
         self.setLayout(dlg_layout)
-        
+
     @pyqtSlot(bool)
     def btn_ok_clicked(self, checked):
-        item = self.tree.selectedItems()[0]        
+        item = self.tree.selectedItems()[0]
         self.plot = item.plot
         self.accept()
-       
-    @pyqtSlot(bool) 
+
+    @pyqtSlot(bool)
     def btn_cancel_clicked(self, checked):
         self.reject()
-        
+
 #class AddCDMSVarDialog(QtGui.QDialog):
 #    def __init__(self, controller, var_list, parent=None):
 #        super(AddCDMSVarDialog, self).__init__(parent)
@@ -1953,18 +1953,18 @@ class AddCDMSPlotDialog(QtGui.QDialog):
 #        self.btn_cancel.clicked.connect(self.btn_cancel_clicked)
 #        self.setLayout(dlg_layout)
 #        self.create_list()
-#        
+#
 #    @pyqtSlot(bool)
 #    def btn_ok_clicked(self, checked):
 #        item = self.var_list.selectedItems()[0]
 #        self.varName = item.varName
 #        self.var = item.var
 #        self.accept()
-#       
-#    @pyqtSlot(bool) 
+#
+#    @pyqtSlot(bool)
 #    def btn_cancel_clicked(self, checked):
 #        self.reject()
-#        
+#
 #    def create_list(self):
 #        for varName in sorted(self.proj_controller.defined_variables):
 #            if varName not in self._var_list:
@@ -1975,22 +1975,22 @@ class AddCDMSPlotDialog(QtGui.QDialog):
 #            if varName not in self._var_list:
 #                var = self.proj_controller.computed_variables[varName]
 #                item = CDMSVarListWidgetItem(None, varName, CDMSVariableOperation, self.var_list)
-            
-        
+
+
 #class CDMSVarListWidgetItem(QtGui.QListWidgetItem):
 #    def __init__(self, var, varName, t=CDMSVariable, parent=None):
 #        super(CDMSVarListWidgetItem, self).__init__(varName, parent)
 #        self.var = var
 #        self.varName = varName
 #        self.type = t
-        
+
 class DropVarLineEdit(QtGui.QLineEdit):
-    
-    def __init__(self, order, parent=None): 
-        super(DropVarLineEdit, self).__init__(parent) 
+
+    def __init__(self, order, parent=None):
+        super(DropVarLineEdit, self).__init__(parent)
         self.setAcceptDrops(True)
         self.order = order
-        
+
     def dropEvent(self, event):
         mimeData = event.mimeData()
         if mimeData.hasFormat("definedVariables"):
@@ -1999,23 +1999,23 @@ class DropVarLineEdit(QtGui.QLineEdit):
             varNames = str(mimeData.text()).split(',')
             self.setText(varNames[-1])
             self.emit(QtCore.SIGNAL("dropped_var"), varNames[-1], self.order)
-            
-                
+
+
     def dragEnterEvent(self, event):
         """ dragEnterEvent(event: QDragEnterEvent) -> None
         Set to accept drops from the version tree
-        
+
         """
         mimeData = event.mimeData()
         if mimeData.hasFormat("definedVariables"):
             event.accept()
         else:
             event.ignore()
-            
+
     def dragMoveEvent(self, event):
         """ dragMoveEvent(event: QDragEnterEvent) -> None
         Set to accept drops from the version tree
-        
+
         """
         mimeData = event.mimeData()
         if mimeData.hasFormat("definedVariables"):
